@@ -1,49 +1,54 @@
 name: Build macOS .app
 
 on:
+  workflow_dispatch:
   push:
     branches: [ main ]
-  workflow_dispatch:
 
 jobs:
-  build:
+  build-macos-app:
     runs-on: macos-latest
 
     steps:
-      - name: Clone repo
+      - name: 📥 Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set up Python
+      - name: 🐍 Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
-      - name: Install dependencies
+      - name: 📦 Install dependencies
         run: |
           python3 -m venv venv
           source venv/bin/activate
+          pip install --upgrade pip
           pip install -r requirements.txt
           pip install pyinstaller
 
-      - name: Add .env and Firebase JSON
+      - name: 🔐 Inject .env and Firebase secret file
         run: |
           echo "${{ secrets.ENV_FILE }}" > .env
           mkdir -p firebase
-          echo "${{ secrets.FIREBASE_JSON }}" > firebase/khosi-chat-room-firebase-adminsdk-frw9o-76ebdf2f74.json
+          echo "${{ secrets.FIREBASE_JSON }}" > firebase/service_account.json
 
-      - name: Build .app with PyInstaller
+      - name: 🛠️ Build .app using PyInstaller
         run: |
           source venv/bin/activate
-          python3 -m PyInstaller --noconfirm --windowed --icon=assets/isama_icon.icns main.py \
+          pyinstaller --name="IsamaManagementSystem" --onefile --windowed \
+            --icon="assets/isama_icon.icns" \
+            --add-data "assets:assets" \
+            --add-data "firebase:firebase" \
             --add-data ".env:." \
-            --add-data "firebase/khosi-chat-room-firebase-adminsdk-frw9o-76ebdf2f74.json:firebase"
+            main.py
 
-      - name: Zip .app
-        run: cd dist && zip -r isama.app.zip main.app
+      - name: 📦 Zip the .app
+        run: |
+          cd dist
+          zip IsamaManagementSystem.app.zip IsamaManagementSystem
 
-      - name: Upload .app as artifact
+      - name: ⬆️ Upload built .app as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: isama-macos-app
-          path: dist/isama.app.zip
-
+          name: IsamaManagementSystem-macOS
+          path: dist/IsamaManagementSystem.app.zip
