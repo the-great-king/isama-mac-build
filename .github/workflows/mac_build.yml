@@ -10,7 +10,7 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - name: 📥 Checkout repository
+      - name: 📥 Checkout code
         uses: actions/checkout@v3
 
       - name: 🐍 Set up Python
@@ -26,29 +26,33 @@ jobs:
           pip install -r requirements.txt
           pip install pyinstaller
 
-      - name: 🔐 Inject .env and Firebase secret file
+      - name: 🔐 Create .env and service_account.json from secrets
         run: |
           echo "${{ secrets.ENV_FILE }}" > .env
           mkdir -p firebase
           echo "${{ secrets.FIREBASE_JSON }}" > firebase/service_account.json
 
-      - name: 🛠️ Build .app using PyInstaller
+      - name: 🛠️ Build macOS .app
         run: |
           source venv/bin/activate
-          pyinstaller --name="IsamaManagementSystem" --onefile --windowed \
+          pyinstaller --name="Isama_Management_System" --onefile --windowed \
             --icon="assets/isama_icon.icns" \
             --add-data "assets:assets" \
             --add-data "firebase:firebase" \
             --add-data ".env:." \
+            --add-data "ui:ui" \
+            --add-data "utils:utils" \
+            --add-data "models:models" \
+            --add-data "screens:screens" \
             main.py
 
       - name: 📦 Zip the .app
         run: |
           cd dist
-          zip IsamaManagementSystem.app.zip IsamaManagementSystem
+          zip -r Isama_Management_System.app.zip Isama_Management_System.app
 
-      - name: ⬆️ Upload built .app as artifact
+      - name: ⬆️ Upload .app as artifact
         uses: actions/upload-artifact@v4
         with:
           name: IsamaManagementSystem-macOS
-          path: dist/IsamaManagementSystem.app.zip
+          path: dist/Isama_Management_System.app.zip
