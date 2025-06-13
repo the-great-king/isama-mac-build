@@ -1,0 +1,1 @@
+"""Firebase package for Isama Management System.""" 
