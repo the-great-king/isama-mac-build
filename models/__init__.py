@@ -1,1 +1,0 @@
-"""Data models for Isama Management System.""" 
