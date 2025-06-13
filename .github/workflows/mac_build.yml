@@ -2,40 +2,30 @@ name: Build macOS .app
 
 on:
   workflow_dispatch:
-  push:
-    branches: [ main ]
 
 jobs:
-  build-macos-app:
-    runs-on: macos-latest
+  build-macos:
+    runs-on: macos-13
 
     steps:
-      - name: 📥 Checkout code
+      - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: 🐍 Set up Python
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
-      - name: 📦 Install dependencies
+      - name: Install dependencies
         run: |
-          python3 -m venv venv
-          source venv/bin/activate
-          pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pyinstaller
+          python -m pip install --upgrade pip
+          pip install pyinstaller python-dotenv pyrebase4 PySide6
 
-      - name: 🔐 Create .env and service_account.json from secrets
+      - name: Build .app
         run: |
-          echo "${{ secrets.ENV_FILE }}" > .env
-          mkdir -p firebase
-          echo "${{ secrets.FIREBASE_JSON }}" > firebase/service_account.json
-
-      - name: 🛠️ Build macOS .app
-        run: |
-          source venv/bin/activate
-          pyinstaller --name="Isama_Management_System" --onefile --windowed \
+          python -m PyInstaller \
+            --name="Isama_Management_System" \
+            --windowed --onefile \
             --icon="assets/isama_icon.icns" \
             --add-data "assets:assets" \
             --add-data "firebase:firebase" \
@@ -46,13 +36,8 @@ jobs:
             --add-data "screens:screens" \
             main.py
 
-      - name: 📦 Zip the .app
-        run: |
-          cd dist
-          zip -r Isama_Management_System.app.zip Isama_Management_System.app
-
-      - name: ⬆️ Upload .app as artifact
-        uses: actions/upload-artifact@v4
+      - name: Upload .app artifact
+        uses: actions/upload-artifact@v3
         with:
-          name: IsamaManagementSystem-macOS
-          path: dist/Isama_Management_System.app.zip
+          name: Isama_Management_System-macOS
+          path: dist/Isama_Management_System
