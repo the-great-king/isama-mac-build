@@ -1,1 +1,0 @@
-"""UI screens for Isama Management System.""" 
