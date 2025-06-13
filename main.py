@@ -14,7 +14,7 @@ def main():
     
     # Set application icons
     if sys.platform == "win32":
-        icon_path = os.path.join(os.path.dirname(__file__), "assets", "favicon.ico")
+        icon_path = os.path.join(os.path.dirname(__file__), "assets", "isama_icon.ico")
         app.setWindowIcon(QIcon(icon_path))
     elif sys.platform == "darwin":  # macOS
         icon_path = os.path.join(os.path.dirname(__file__), "assets", "isama_icon.icns")
