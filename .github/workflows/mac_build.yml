@@ -23,7 +23,7 @@ jobs:
         python3 -m venv venv
         source venv/bin/activate
         pip install --upgrade pip
-        pip install pyinstaller pyqt5 python-dotenv firebase-admin
+        pip install pyinstaller pyqt5 python-dotenv firebase-admin requests
 
     - name: Build the .app
       run: |
