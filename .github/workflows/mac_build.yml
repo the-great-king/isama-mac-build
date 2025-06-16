@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-mac:
-    runs-on: macos-13
+  build-macos:
+    runs-on: macos-latest
 
     steps:
       - name: Checkout repository
@@ -14,26 +14,25 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.10'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pyinstaller python-dotenv
+          pip install pyinstaller
 
       - name: Create .env file
-        run: |
-          echo "${{ secrets.ENV_FILE }}" > .env
+        run: echo "${{ secrets.ENV_FILE }}" > .env
 
       - name: Create Firebase service account JSON
         run: |
           mkdir -p firebase
-          echo '${{ secrets.FIREBASE_JSON }}' > khosi-chat-room-firebase-adminsdk-frw9o-76ebdf2f74.json
+          echo '${{ secrets.FIREBASE_JSON }}' > firebase/khosi-chat-room-firebase-adminsdk-frw9o-76ebdf2f74.json
 
-      - name: Build macOS .app
+      - name: Build .app using PyInstaller
         run: |
-          python3 -m PyInstaller \
+          python -m PyInstaller \
             --name="Isama_Management_System" \
             --windowed \
             --icon="assets/isama_icon.icns" \
@@ -46,8 +45,13 @@ jobs:
             --add-data "screens:screens" \
             main.py
 
-      - name: Upload .app artifact
+      - name: Zip the .app properly for macOS
+        run: |
+          mkdir -p output
+          ditto -c -k --sequesterRsrc --keepParent "dist/Isama_Management_System.app" "output/Isama_Management_System.zip"
+
+      - name: Upload the zipped .app
         uses: actions/upload-artifact@v4
         with:
-          name: IsamaManagementSystem-macOS
-          path: dist/Isama_Management_System.app
+          name: isama-macos-app
+          path: output/Isama_Management_System.zip
