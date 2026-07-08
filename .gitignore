@@ -17,8 +17,10 @@ sdist/
 var/
 wheels/
 *.egg-info/
+
 .installed.cfg
 *.egg
+*.env
 
 # Virtual Environment
 venv/
@@ -32,7 +34,7 @@ ENV/
 *.swo
 
 # Firebase
-firebase/khosi-chat-room-firebase-adminsdk-frw9o-76ebdf2f74.json
+firebase/service_key.json
 .env
 
 # Logs
@@ -41,83 +43,5 @@ firebase/khosi-chat-room-firebase-adminsdk-frw9o-76ebdf2f74.json
 # System
 .DS_Store
 Thumbs.db 
-firebase/khosi-chat-room-firebase-adminsdk-frw9o-76ebdf2f74.json
-.env
-
-firebase/khosi-chat-room-firebase-adminsdk-frw9o-76ebdf2f74.json
-.env
-
-firebase/khosi-chat-room-firebase-adminsdk-frw9o-76ebdf2f74.json
-.env
-
-firebase/khosi-chat-room-firebase-adminsdk-frw9o-76ebdf2f74.json
-.env
-
-firebase/khosi-chat-room-firebase-adminsdk-frw9o-76ebdf2f74.json
-.env
-
-firebase/khosi-chat-room-firebase-adminsdk-frw9o-76ebdf2f74.json
-.env
-
-firebase/khosi-chat-room-firebase-adminsdk-frw9o-76ebdf2f74.json
-.env
-
-firebase/khosi-chat-room-firebase-adminsdk-frw9o-76ebdf2f74.json
-.env
-
-firebase/khosi-chat-room-firebase-adminsdk-frw9o-76ebdf2f74.json
-.env
-
-firebase/khosi-chat-room-firebase-adminsdk-frw9o-76ebdf2f74.json
-.env
-
-firebase/khosi-chat-room-firebase-adminsdk-frw9o-76ebdf2f74.json
-.env
-
-firebase/khosi-chat-room-firebase-adminsdk-frw9o-76ebdf2f74.json
-.env
-
-firebase/khosi-chat-room-firebase-adminsdk-frw9o-76ebdf2f74.json
-.env
-
-firebase/khosi-chat-room-firebase-adminsdk-frw9o-76ebdf2f74.json
-.env
-
-firebase/khosi-chat-room-firebase-adminsdk-frw9o-76ebdf2f74.json
-.env
-
-firebase/khosi-chat-room-firebase-adminsdk-frw9o-76ebdf2f74.json
-.env
-
-firebase/khosi-chat-room-firebase-adminsdk-frw9o-76ebdf2f74.json
-.env
-
-firebase/khosi-chat-room-firebase-adminsdk-frw9o-76ebdf2f74.json
-.env
-
-firebase/khosi-chat-room-firebase-adminsdk-frw9o-76ebdf2f74.json
-.env
-
-firebase/khosi-chat-room-firebase-adminsdk-frw9o-76ebdf2f74.json
-.env
-
-firebase/khosi-chat-room-firebase-adminsdk-frw9o-76ebdf2f74.json
-.env
-
-firebase/khosi-chat-room-firebase-adminsdk-frw9o-76ebdf2f74.json
-.env
-
-firebase/khosi-chat-room-firebase-adminsdk-frw9o-76ebdf2f74.json
-.env
-
-firebase/khosi-chat-room-firebase-adminsdk-frw9o-76ebdf2f74.json
-.env
-
-firebase/khosi-chat-room-firebase-adminsdk-frw9o-76ebdf2f74.json
-.env
-
-firebase/khosi-chat-room-firebase-adminsdk-frw9o-76ebdf2f74.json
-.env
-
-firebase/khosi-chat-room-firebase-adminsdk-frw9o-76ebdf2f74.json
+firebase/service_key.json
 .env
