@@ -32,13 +32,11 @@ class FirebaseManager:
         
         IMPORTANT: Before running the application:
         1. Download your Firebase service account key JSON file
-        2. Place it in the /firebase directory as 'khosi-chat-room-firebase-adminsdk-frw9o-76ebdf2f74.json'
-        3. DO NOT commit this file to version control!
-        4. Add 'firebase/khosi-chat-room-firebase-adminsdk-frw9o-76ebdf2f74.json' to your .gitignore file
+        2. Place it in the /firebase directory as 'service_Key.json'
         """
         try:
             # Initialize Firebase Admin SDK
-            cred_path = os.path.join(os.path.dirname(__file__), 'khosi-chat-room-firebase-adminsdk-frw9o-76ebdf2f74.json')
+            cred_path = os.path.join(os.path.dirname(__file__), 'service_key.json')
             cred = credentials.Certificate(cred_path)
             firebase_admin.initialize_app(cred, {
                 'databaseURL': os.getenv('FIREBASE_DATABASE_URL')
@@ -48,7 +46,6 @@ class FirebaseManager:
             
         except Exception as e:
             print(f"Firebase initialization error: {e}")
-            print("Please ensure you have placed the khosi-chat-room-firebase-adminsdk-frw9o-76ebdf2f74.json file in the firebase directory")
             raise
 
     def sign_in_with_email_password(self, email, password):
@@ -381,7 +378,3 @@ class FirebaseManager:
         except Exception as e:
             print(f"Error updating business loan: {e}")
             raise
-
-# Create a .gitignore file to prevent committing sensitive data
-with open(os.path.join(os.path.dirname(__file__), '..', '.gitignore'), 'a') as f:
-    f.write('\nfirebase/khosi-chat-room-firebase-adminsdk-frw9o-76ebdf2f74.json\n.env\n') 
