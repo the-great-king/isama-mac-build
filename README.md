@@ -33,7 +33,7 @@ A PySide6-based shop management system with inventory tracking, sales management
    - Create a new Firebase project at [Firebase Console](https://console.firebase.google.com)
    - Enable Firebase Authentication and Realtime Database
    - Download your service account key JSON file
-   - Place it at `firebase/khosi-chat-room-firebase-adminsdk-frw9o-76ebdf2f74.json`
+   - Place it at `firebase/service_key.json`
    - Create a `.env` file in the root directory with:
      ```
      FIREBASE_DATABASE_URL=your_database_url
@@ -55,7 +55,7 @@ isama_management/
 ├── assets/               # Images and icons
 ├── firebase/
 │   ├── db.py             # Firebase configuration
-│   └── khosi-chat-room-firebase-adminsdk-frw9o-76ebdf2f74.json
+│   └── service_key.json
 ├── models/
 │   ├── user_model.py     # User data structure
 │   ├── product_model.py  # Product and stock
@@ -74,7 +74,7 @@ isama_management/
 
 ## Security Notes
 
-- Never commit `khosi-chat-room-firebase-adminsdk-frw9o-76ebdf2f74.json` to version control
+- Never commit `service_key.json` to version control
 - Keep your Firebase credentials secure
 - Use environment variables for sensitive data
 
@@ -88,6 +88,16 @@ To add features:
 1. Create new model classes in `models/`
 2. Add new screens in `screens/`
 3. Update Firebase schema as needed
+
+## Author
+
+This project was designed and developed by William Sambu.
+
+If you have questions, suggestions, or would like to collaborate, feel free to connect with me on LinkedIn:
+
+LinkedIn: https://www.linkedin.com/in/william-sambu-528ab2357/
+
+If you find this project useful, consider giving it a ⭐
 
 ## License
 
