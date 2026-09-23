@@ -43,7 +43,8 @@ class Product:
     Attributes:
         id (str): Unique identifier for the product
         name (str): Product name
-        category (str): Product category
+        category (str): Product category name shown to users
+        category_id (Optional[str]): Firebase category ID used internally
         price (Decimal): Current selling price
         stock (int): Current stock level
         min_stock (int): Minimum stock level for alerts
@@ -60,6 +61,7 @@ class Product:
     created_at: datetime
     stock_updates: List[StockUpdate]
     is_active: bool = True
+    category_id: Optional[str] = None
 
     def add_stock_update(self, quantity: int, update_type: str, updated_by: str, notes: Optional[str] = None):
         """Add a new stock update record."""
@@ -75,7 +77,7 @@ class Product:
 
     def to_dict(self) -> dict:
         """Convert Product instance to a dictionary for Firebase storage."""
-        return {
+        data = {
             'id': self.id,
             'name': self.name,
             'category': self.category,
@@ -86,6 +88,9 @@ class Product:
             'stock_updates': [update.to_dict() for update in self.stock_updates],
             'is_active': self.is_active
         }
+        if self.category_id is not None:
+            data['category_id'] = self.category_id
+        return data
 
     @classmethod
     def from_dict(cls, data: dict) -> 'Product':

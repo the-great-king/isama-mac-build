@@ -225,23 +225,48 @@ class CategoryWindow(QMainWindow):
                 QMessageBox.critical(self, "Error", f"Failed to update category: {str(e)}")
                 
     def delete_category(self, category: Category):
-        """Delete (deactivate) a category."""
+        """Delete (deactivate) a category after checking linked inventory."""
+        try:
+            products_data = self.firebase.get_database_reference('products').get() or {}
+            linked_products = []
+
+            for product_id, data in products_data.items():
+                if not isinstance(data, dict):
+                    continue
+                is_linked = (
+                    (data.get('category_id') == category.id)
+                    or (
+                        data.get('category_id') is None
+                        and data.get('category') == category.name
+                    )
+                )
+                if is_linked and data.get('is_active', True) is not False:
+                    linked_products.append(data.get('name', product_id))
+
+            if linked_products:
+                QMessageBox.warning(
+                    self,
+                    "Cannot Delete Category",
+                    f"This category is linked to inventory items: {', '.join(linked_products)}.\n\nPlease delete the inventory first, then delete the category."
+                )
+                return
+
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to check category usage: {str(e)}")
+            return
+
         reply = QMessageBox.question(
             self,
             "Confirm Delete",
-            f"Are you sure you want to delete the category '{category.name}'?",
+            f"Are you sure you want to delete the category '{category.name}'?\n\nThis action cannot be undone and the category cannot be retrieved after deletion.",
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No
         )
         
         if reply == QMessageBox.Yes:
             try:
-                # Soft delete by setting is_active to False
-                category.is_active = False
-                self.firebase.db.reference(f'categories/{category.id}').update(category.to_dict())
-                
-                # Reload data
+                self.firebase.db.reference(f'categories/{category.id}').delete()
                 self.load_data()
-                
+                QMessageBox.information(self, "Deleted", f"'{category.name}' has been deleted successfully.")
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to delete category: {str(e)}") 

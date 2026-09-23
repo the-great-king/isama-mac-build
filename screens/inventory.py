@@ -75,47 +75,48 @@ class AddProductDialog(QDialog):
         layout.addRow("", button_layout)
         
     def load_categories(self):
-        """Load categories from Firebase."""
+        """Load categories from Firebase and store each category's ID in the combo box data."""
         try:
-            # Clear existing items
             self.category_combo.clear()
-            
-            # Get categories from Firebase
+
             db = self.firebase.get_database_reference('categories')
             categories_data = db.get() or {}
-            
-            # Add categories to combo box
+
             for category_id, data in categories_data.items():
                 try:
                     data['id'] = category_id
                     category = Category.from_dict(data)
                     if category.is_active:
-                        self.category_combo.addItem(category.name)
+                        self.category_combo.addItem(category.name, category.id)
                 except Exception as e:
                     print(f"Error loading category {category_id}: {e}")
                     continue
-                    
-            # Set current category if editing
+
             if self.product:
-                index = self.category_combo.findText(self.product.category)
+                if getattr(self.product, 'category_id', None):
+                    index = self.category_combo.findData(self.product.category_id)
+                else:
+                    index = self.category_combo.findText(self.product.category)
                 if index >= 0:
                     self.category_combo.setCurrentIndex(index)
-                    
+
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to load categories: {str(e)}")
-        
+
     def get_product_data(self) -> dict:
         """Get the product data from the form."""
+        selected_category_id = self.category_combo.currentData()
         data = {
             'name': self.name_input.text().strip(),
             'category': self.category_combo.currentText(),
+            'category_id': selected_category_id,
             'price': Decimal(str(self.price_input.value())),
             'min_stock': self.min_stock_input.value()
         }
-        
-        if not self.product:  # Only include stock for new products
+
+        if not self.product:
             data['stock'] = self.stock_input.value()
-            
+
         return data
 
 class InventoryWindow(QMainWindow):
@@ -197,6 +198,9 @@ class InventoryWindow(QMainWindow):
                 try:
                     data['id'] = product_id
                     product = Product.from_dict(data)
+
+                    if not getattr(product, 'is_active', True):
+                        continue
                     
                     # Apply search filter
                     if search_text and search_text not in product.name.lower():
@@ -261,9 +265,25 @@ class InventoryWindow(QMainWindow):
                         }
                     """)
                     update_stock_btn.clicked.connect(lambda checked, p=product: self.show_stock_update_dialog(p))
+
+                    delete_btn = QPushButton("Delete")
+                    delete_btn.setStyleSheet("""
+                        QPushButton {
+                            background-color: #dc3545;
+                            color: white;
+                            border: none;
+                            padding: 4px 8px;
+                            border-radius: 2px;
+                        }
+                        QPushButton:hover {
+                            background-color: #c82333;
+                        }
+                    """)
+                    delete_btn.clicked.connect(lambda checked, p=product: self.delete_product(p))
                     
                     actions_layout.addWidget(edit_btn)
                     actions_layout.addWidget(update_stock_btn)
+                    actions_layout.addWidget(delete_btn)
                     actions_layout.addStretch()
                     
                     self.table.setCellWidget(row, 6, actions_widget)
@@ -291,12 +311,12 @@ class InventoryWindow(QMainWindow):
         if dialog.exec_():
             try:
                 data = dialog.get_product_data()
-                
-                # Create new product
+
                 product = Product(
                     id=self.firebase.db.reference('products').push().key,
                     name=data['name'],
                     category=data['category'],
+                    category_id=data.get('category_id'),
                     price=data['price'],
                     stock=data['stock'],
                     min_stock=data['min_stock'],
@@ -311,8 +331,7 @@ class InventoryWindow(QMainWindow):
                         )
                     ]
                 )
-                
-                # Save to Firebase
+
                 self.firebase.db.reference(f'products/{product.id}').set(product.to_dict())
                 
                 # Reload data
@@ -330,14 +349,13 @@ class InventoryWindow(QMainWindow):
         if dialog.exec_():
             try:
                 data = dialog.get_product_data()
-                
-                # Update product data
+
                 product.name = data['name']
                 product.category = data['category']
+                product.category_id = data.get('category_id')
                 product.price = data['price']
                 product.min_stock = data['min_stock']
-                
-                # Save to Firebase
+
                 self.firebase.db.reference(f'products/{product.id}').update(product.to_dict())
                 
                 # Reload data
@@ -349,6 +367,27 @@ class InventoryWindow(QMainWindow):
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to update product: {str(e)}")
                 
+    def delete_product(self, product: Product):
+        """Permanently delete a product after confirmation."""
+        reply = QMessageBox.question(
+            self,
+            "Confirm Delete",
+            f"Are you sure you want to delete '{product.name}'?\n\nThis action cannot be undone and the product cannot be retrieved after deletion.",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+
+        if reply != QMessageBox.Yes:
+            return
+
+        try:
+            self.firebase.db.reference(f'products/{product.id}').delete()
+            self.load_data()
+            self.update_dashboard()
+            QMessageBox.information(self, "Deleted", f"'{product.name}' has been deleted successfully.")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to delete product: {str(e)}")
+
     def show_stock_update_dialog(self, product: Product):
         """Show dialog for updating stock quantity."""
         dialog = QDialog(self)
