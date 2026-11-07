@@ -321,79 +321,172 @@ class SalesWindow(QMainWindow):
     def setup_ui(self):
         """Set up the sales window UI."""
         self.setWindowTitle("Sales Management")
-        self.setMinimumSize(800, 600)
+        self.setMinimumSize(900, 650)
         
-        # Create central widget and layout
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         layout = QVBoxLayout(central_widget)
         
-        # Add header
         header = QLabel("Sales Management")
         header.setStyleSheet("font-size: 24px; font-weight: bold;")
         layout.addWidget(header)
         
-        # Add action buttons
         button_layout = QHBoxLayout()
-        
         add_sale_btn = QPushButton("New Sale")
         add_sale_btn.clicked.connect(self.show_add_sale_dialog)
         button_layout.addWidget(add_sale_btn)
-        
+        button_layout.addStretch()
         layout.addLayout(button_layout)
+
+        filter_layout = QHBoxLayout()
+
+        self.date_filter = QComboBox()
+        self.date_filter.addItems(["All Time", "Today", "This Week", "This Month", "Custom Range"])
+        self.date_filter.currentTextChanged.connect(self.update_date_filters_visibility)
+        self.date_filter.currentTextChanged.connect(self.load_data)
+        filter_layout.addWidget(QLabel("Date:"))
+        filter_layout.addWidget(self.date_filter)
+
+        self.start_date_input = QDateEdit()
+        self.start_date_input.setCalendarPopup(True)
+        self.start_date_input.setDate(QDate.currentDate().addMonths(-1))
+        self.start_date_label = QLabel("From:")
+        filter_layout.addWidget(self.start_date_label)
+        filter_layout.addWidget(self.start_date_input)
+
+        self.end_date_input = QDateEdit()
+        self.end_date_input.setCalendarPopup(True)
+        self.end_date_input.setDate(QDate.currentDate())
+        self.end_date_label = QLabel("To:")
+        filter_layout.addWidget(self.end_date_label)
+        filter_layout.addWidget(self.end_date_input)
+
+        self.type_filter = QComboBox()
+        self.type_filter.addItems(["All Types", "Cash", "Loan"])
+        self.type_filter.currentTextChanged.connect(self.load_data)
+        filter_layout.addWidget(QLabel("Type:"))
+        filter_layout.addWidget(self.type_filter)
+
+        self.status_filter = QComboBox()
+        self.status_filter.addItems(["All Status", "Paid", "Partial Paid", "Unpaid"])
+        self.status_filter.currentTextChanged.connect(self.load_data)
+        filter_layout.addWidget(QLabel("Status:"))
+        filter_layout.addWidget(self.status_filter)
+
+        self.sort_filter = QComboBox()
+        self.sort_filter.addItems(["Newest First", "Oldest First"])
+        self.sort_filter.currentTextChanged.connect(self.load_data)
+        filter_layout.addWidget(QLabel("Sort:"))
+        filter_layout.addWidget(self.sort_filter)
+
+        filter_layout.addStretch()
+        layout.addLayout(filter_layout)
+
+        self.update_date_filters_visibility()
         
-        # Add sales table
         self.table = QTableWidget()
         self.table.setColumnCount(7)
         self.table.setHorizontalHeaderLabels([
             "Date", "Type", "Buyer", "Amount", "Status", "Description", "Actions"
         ])
         layout.addWidget(self.table)
+
+    def update_date_filters_visibility(self):
+        """Show or hide custom date range inputs."""
+        custom_range = self.date_filter.currentText() == "Custom Range"
+        self.start_date_label.setVisible(custom_range)
+        self.start_date_input.setVisible(custom_range)
+        self.end_date_label.setVisible(custom_range)
+        self.end_date_input.setVisible(custom_range)
         
     def load_data(self):
-        """Load sales data from Firebase."""
+        """Load sales data from Firebase with date, type, status, and sorting filters."""
         try:
-            # Clear table
             self.table.setRowCount(0)
-            
-            # Get transactions
             transactions = self.firebase.get_transactions()
-            
-            # Add transactions to table
+
+            date_filter = self.date_filter.currentText()
+            type_filter = self.type_filter.currentText().lower()
+            status_filter = self.status_filter.currentText().lower()
+            sort_desc = self.sort_filter.currentText() == "Newest First"
+
+            filtered_transactions = []
             for transaction in transactions:
+                if type_filter != "all types" and transaction.transaction_type.lower() != type_filter:
+                    continue
+
+                if transaction.transaction_type == 'loan':
+                    payment_status = (transaction.payment_status or 'unpaid').lower()
+                    if status_filter == 'paid' and payment_status != 'paid':
+                        continue
+                    if status_filter == 'partial paid' and payment_status != 'partial':
+                        continue
+                    if status_filter == 'unpaid' and payment_status != 'unpaid':
+                        continue
+                elif status_filter in ['paid', 'partial paid', 'unpaid']:
+                    continue
+
+                if date_filter != "All Time":
+                    transaction_date = transaction.transaction_date.date()
+                    today = datetime.now().date()
+
+                    if date_filter == "Today":
+                        if transaction_date != today:
+                            continue
+                    elif date_filter == "This Week":
+                        week_start = today - timedelta(days=today.weekday())
+                        week_end = week_start + timedelta(days=6)
+                        if not (week_start <= transaction_date <= week_end):
+                            continue
+                    elif date_filter == "This Month":
+                        month_start = today.replace(day=1)
+                        if transaction_date < month_start:
+                            continue
+                    elif date_filter == "Custom Range":
+                        start_date = self.start_date_input.date().toPython()
+                        end_date = self.end_date_input.date().toPython()
+                        if not (start_date <= transaction_date <= end_date):
+                            continue
+
+                filtered_transactions.append(transaction)
+
+            filtered_transactions.sort(
+                key=lambda t: t.transaction_date,
+                reverse=sort_desc
+            )
+
+            for transaction in filtered_transactions:
                 row = self.table.rowCount()
                 self.table.insertRow(row)
-                
-                # Add transaction data
+
                 self.table.setItem(row, 0, QTableWidgetItem(format_date(transaction.transaction_date)))
                 self.table.setItem(row, 1, QTableWidgetItem(transaction.transaction_type.title()))
                 self.table.setItem(row, 2, QTableWidgetItem(transaction.display_name))
                 self.table.setItem(row, 3, QTableWidgetItem(format_currency(transaction.total_amount)))
-                
-                # Status column
+
                 if transaction.transaction_type == 'loan':
-                    status = transaction.payment_status.title()
+                    status = (transaction.payment_status or 'unpaid').title()
                     if status == 'Partial':
-                        status += f" ({format_currency(transaction.amount_paid)})"
+                        status = 'Partial Paid'
+                    if transaction.amount_paid is not None:
+                        status = f"{status} ({format_currency(transaction.amount_paid)})"
                 else:
                     status = "Paid"
+
                 self.table.setItem(row, 4, QTableWidgetItem(status))
-                
-                # Description
                 self.table.setItem(row, 5, QTableWidgetItem(transaction.description or ""))
-                
-                # Add action buttons
-                if transaction.transaction_type == 'loan' and transaction.payment_status != 'paid':
+
+                if transaction.transaction_type == 'loan' and (transaction.payment_status or 'unpaid') != 'paid':
                     action_widget = QWidget()
                     action_layout = QHBoxLayout(action_widget)
                     action_layout.setContentsMargins(0, 0, 0, 0)
-                    
+
                     pay_btn = QPushButton("Pay")
                     pay_btn.clicked.connect(lambda checked, t=transaction: self.show_payment_dialog(t))
                     action_layout.addWidget(pay_btn)
-                    
+
                     self.table.setCellWidget(row, 6, action_widget)
-                
+
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to load sales data: {str(e)}")
             
